@@ -1,6 +1,6 @@
-import ToolboxIcon from './svg/toolbox.svg';
-import './index.css';
-import Uploader from './uploader';
+import ToolboxIcon from "./svg/toolbox.svg";
+import "./index.css";
+import Uploader from "./uploader";
 
 /**
  * Timeout when loader should be removed
@@ -46,7 +46,7 @@ export default class Personality {
    * @param {PersonalityConfig} config - Tool's config
    * @param {API} api - Editor.js API
    */
-  constructor({ data, config, api }) {
+  constructor({ data, config, api, readOnly }) {
     this.api = api;
 
     this.nodes = {
@@ -54,16 +54,16 @@ export default class Personality {
       name: null,
       description: null,
       link: null,
-      photo: null
+      photo: null,
     };
 
     this.config = {
-      endpoint: config.endpoint || '',
-      field: config.field || 'image',
-      types: config.types || 'image/*',
-      namePlaceholder: config.namePlaceholder || 'Name',
-      descriptionPlaceholder: config.descriptionPlaceholder || 'Description',
-      linkPlaceholder: config.linkPlaceholder || 'Link'
+      endpoint: config.endpoint || "",
+      field: config.field || "image",
+      types: config.types || "image/*",
+      namePlaceholder: config.namePlaceholder || "Name",
+      descriptionPlaceholder: config.descriptionPlaceholder || "Description",
+      linkPlaceholder: config.linkPlaceholder || "Link",
     };
 
     /**
@@ -72,12 +72,17 @@ export default class Personality {
     this.data = data;
 
     /**
+     * Set readonly mode state
+     */
+    this.readOnly = readOnly;
+
+    /**
      * Module for image files uploading
      */
     this.uploader = new Uploader({
       config: this.config,
       onUpload: (response) => this.onUpload(response),
-      onError: (error) => this.uploadingFailed(error)
+      onError: (error) => this.uploadingFailed(error),
     });
   }
 
@@ -89,8 +94,15 @@ export default class Personality {
   static get toolbox() {
     return {
       icon: ToolboxIcon,
-      title: 'Personality'
+      title: "Personality",
     };
+  }
+
+  /**
+   * Get readOnly supported status
+   */
+  static get isReadOnlySupported() {
+    return true;
   }
 
   /**
@@ -98,7 +110,9 @@ export default class Personality {
    * @param {UploadResponseFormat} response
    */
   onUpload(response) {
-    const { body: { success, file } } = response;
+    const {
+      body: { success, file },
+    } = response;
 
     if (success && file && file.url) {
       this.data.photo = file.url;
@@ -123,7 +137,7 @@ export default class Personality {
   stopLoading() {
     setTimeout(() => {
       this.nodes.photo.classList.remove(this.CSS.loader);
-      this.nodes.photo.removeAttribute('style');
+      this.nodes.photo.removeAttribute("style");
     }, LOADER_DELAY);
   }
 
@@ -131,7 +145,7 @@ export default class Personality {
    * Show loader when file upload started
    */
   addLoader() {
-    this.nodes.photo.style.background = 'none';
+    this.nodes.photo.style.background = "none";
     this.nodes.photo.classList.add(this.CSS.loader);
   }
 
@@ -144,7 +158,7 @@ export default class Personality {
 
     this.api.notifier.show({
       message: errorMessage,
-      style: 'error'
+      style: "error",
     });
   }
 
@@ -160,11 +174,11 @@ export default class Personality {
       /**
        * Tool's classes
        */
-      wrapper: 'cdx-personality',
-      name: 'cdx-personality__name',
-      photo: 'cdx-personality__photo',
-      link: 'cdx-personality__link',
-      description: 'cdx-personality__description'
+      wrapper: "cdx-personality",
+      name: "cdx-personality__name",
+      photo: "cdx-personality__photo",
+      link: "cdx-personality__link",
+      description: "cdx-personality__description",
     };
   }
 
@@ -175,7 +189,9 @@ export default class Personality {
    */
   save(toolsContent) {
     const name = toolsContent.querySelector(`.${this.CSS.name}`).textContent;
-    const description = toolsContent.querySelector(`.${this.CSS.description}`).textContent;
+    const description = toolsContent.querySelector(
+      `.${this.CSS.description}`
+    ).textContent;
     const link = toolsContent.querySelector(`.${this.CSS.link}`).textContent;
     const photo = this.data.photo;
 
@@ -183,10 +199,10 @@ export default class Personality {
      * Fill missing fields with empty strings
      */
     Object.assign(this.data, {
-      name: name.trim() || '',
-      description: description.trim() || '',
-      link: link.trim() || '',
-      photo: photo || ''
+      name: name.trim() || "",
+      description: description.trim() || "",
+      link: link.trim() || "",
+      photo: photo || "",
     });
 
     return this.data;
@@ -199,21 +215,21 @@ export default class Personality {
   render() {
     const { name, description, photo, link } = this.data;
 
-    this.nodes.wrapper = this.make('div', this.CSS.wrapper);
+    this.nodes.wrapper = this.make("div", this.CSS.wrapper);
 
-    this.nodes.name = this.make('div', this.CSS.name, {
-      contentEditable: true
+    this.nodes.name = this.make("div", this.CSS.name, {
+      contentEditable: !this.readOnly,
     });
 
-    this.nodes.description = this.make('div', this.CSS.description, {
-      contentEditable: true
+    this.nodes.description = this.make("div", this.CSS.description, {
+      contentEditable: !this.readOnly,
     });
 
-    this.nodes.link = this.make('div', this.CSS.link, {
-      contentEditable: true
+    this.nodes.link = this.make("div", this.CSS.link, {
+      contentEditable: !this.readOnly,
     });
 
-    this.nodes.photo = this.make('div', this.CSS.photo);
+    this.nodes.photo = this.make("div", this.CSS.photo);
 
     if (photo) {
       this.nodes.photo.style.background = `url('${photo}') center center / cover no-repeat`;
@@ -222,7 +238,8 @@ export default class Personality {
     if (description) {
       this.nodes.description.textContent = description;
     } else {
-      this.nodes.description.dataset.placeholder = this.config.descriptionPlaceholder;
+      this.nodes.description.dataset.placeholder =
+        this.config.descriptionPlaceholder;
     }
 
     if (name) {
@@ -237,11 +254,11 @@ export default class Personality {
       this.nodes.link.dataset.placeholder = this.config.linkPlaceholder;
     }
 
-    this.nodes.photo.addEventListener('click', () => {
+    this.nodes.photo.addEventListener("click", () => {
       this.uploader.uploadSelectedFile({
         onPreview: () => {
           this.addLoader();
-        }
+        },
       });
     });
 
@@ -262,10 +279,12 @@ export default class Personality {
     /**
      * Return false if fields are empty
      */
-    return savedData.name ||
-        savedData.description ||
-        savedData.link ||
-        savedData.photo;
+    return (
+      savedData.name ||
+      savedData.description ||
+      savedData.link ||
+      savedData.photo
+    );
   }
 
   /**
